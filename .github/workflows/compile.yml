@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-java@v3 #actions/setup-java@v3 操作被用于设置 Java 运行环境
         with:
           java-version: '11' # 指定所需的 Java 版本
-#          distribution: 'temurin' #'temurin' 表示使用 Temurin（先前称为 AdoptOpenJDK） 的发行版。Temurin 提供了免费的、社区驱动的 OpenJDK 发行版。
+          distribution: 'temurin' #'temurin' 表示使用 Temurin（先前称为 AdoptOpenJDK） 的发行版。Temurin 提供了免费的、社区驱动的 OpenJDK 发行版。
 
       - name: Build with Maven
         run: mvn clean install
