@@ -30,13 +30,8 @@ jobs:
 
       - name: Deploy server
         run: |
-          echo -e "[demo] \n$SERVER_DEMO ansible_ssh_port=$PORT_DEMO ansible_ssh_user=$ACCOUNT_DEMO ansible_ssh_pass='$PASSWORD_DEMO'" > ./hostfile
-          docker run -v $PWD/hostfile:/tmp/hostfile -e ANSIBLE_HOST_KEY_CHECKING=false -e SERVER_DEMO=$SERVER_DEMO -e PORT_DEMO=$PORT_DEMO -e ACCOUNT_DEMO=$ACCOUNT_DEMO -e PASSWORD_DEMO=$PASSWORD_DEMO --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m shell -a "touch /usr/local/demo/docker-compose-deploy.yml && mv /usr/local/demo/docker-compose-deploy.yml /usr/local/demo/docker-compose-deploy.yml_bak"
-          docker run -v $PWD/hostfile:/tmp/hostfile -v $PWD/deploy:/tmp/deploy -e ANSIBLE_HOST_KEY_CHECKING=false -e SERVER_DEMO=$SERVER_DEMO -e PORT_DEMO=$PORT_DEMO -e ACCOUNT_DEMO=$ACCOUNT_DEMO -e PASSWORD_DEMO=$PASSWORD_DEMO --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m copy -a "src=/tmp/deploy/prod/emsd/docker-compose-deploy.yml dest=/usr/local/demo/docker-compose-deploy.yml"
-          docker run -v $PWD/hostfile:/tmp/hostfile -e ANSIBLE_HOST_KEY_CHECKING=false -e SERVER_DEMO=$SERVER_DEMO -e PORT_DEMO=$PORT_DEMO -e ACCOUNT_DEMO=$ACCOUNT_DEMO -e PASSWORD_DEMO=$PASSWORD_DEMO --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m shell -a "docker-compose -f /usr/local/demo/docker-compose-deploy.yml --compatibility up -d "
+          echo -e "[demo] \n${{ secrets.SERVER_DEMO }} ansible_ssh_port=${{ secrets.PORT_DEMO }} ansible_ssh_user=${{ secrets.ACCOUNT_DEMO }} ansible_ssh_pass='${{ secrets.PASSWORD_DEMO }}'" > ./hostfile
+          docker run -v $PWD/hostfile:/tmp/hostfile -e ANSIBLE_HOST_KEY_CHECKING=false --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m shell -a "touch /usr/local/demo/docker-compose-deploy.yml && mv /usr/local/demo/docker-compose-deploy.yml /usr/local/demo/docker-compose-deploy.yml_bak"
+          docker run -v $PWD/hostfile:/tmp/hostfile -v $PWD/deploy:/tmp/deploy -e ANSIBLE_HOST_KEY_CHECKING=false --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m copy -a "src=/tmp/deploy/prod/emsd/docker-compose-deploy.yml dest=/usr/local/demo/docker-compose-deploy.yml"
+          docker run -v $PWD/hostfile:/tmp/hostfile -e ANSIBLE_HOST_KEY_CHECKING=false --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m shell -a "docker-compose -f /usr/local/demo/docker-compose-deploy.yml --compatibility up -d "
           rm -f hostfile
-        env:
-          SERVER_DEMO: ${{ secrets.SERVER_DEMO }}
-          PORT_DEMO: ${{ secrets.PORT_DEMO }}
-          ACCOUNT_DEMO: ${{ secrets.ACCOUNT_DEMO }}
-          PASSWORD_DEMO: ${{ secrets.PASSWORD_DEMO }}
