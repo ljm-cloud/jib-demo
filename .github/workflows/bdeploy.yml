@@ -1,0 +1,37 @@
+name: Build and Deploy for aliyun
+
+on:
+  push:
+    branches: [bdeploy]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy: #矩阵策略
+      matrix:
+        java: [ '11' ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 #actions/checkout@v3 是 GitHub Actions 中一个常用的操作（Action），用于从存储库中检出代码。@v3 是指定该 Action 的版本号。在这里，v3 表示使用的是版本 3。
+
+      - name: Set up Java
+        uses: actions/setup-java@v3 #actions/setup-java@v3 操作被用于设置 Java 运行环境
+        with:
+          java-version: ${{ matrix.java }} # 指定所需的 Java 版本
+          distribution: 'temurin' #'temurin' 表示使用 Temurin（先前称为 AdoptOpenJDK） 的发行版。Temurin 提供了免费的、社区驱动的 OpenJDK 发行版。
+
+      - name: Build base
+        run: mvn clean install
+
+      - name: Build container image
+        run: mvn clean package -DskipTests jib:build # -Pdocker
+
+      - name: Deploy server
+        run: |
+          echo -e "[demo] \n${{ secrets.SERVER_DEMO }} ansible_ssh_port=${{ secrets.PORT_DEMO}} ansible_ssh_user=${{ secrets.ACCOUNT_DEMO }} ansible_ssh_pass='${{ secrets.PASSWORD_DEMO }}'" > ./hostfile
+          docker run -v $PWD/hostfile:/tmp/hostfile -e ANSIBLE_HOST_KEY_CHECKING=false --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m shell -a "touch /usr/local/demo/docker-compose-deploy.yml && mv /usr/local/demo/docker-compose-deploy.yml /usr/local/demo/docker-compose-deploy.yml_bak"
+          docker run -v $PWD/hostfile:/tmp/hostfile -v $PWD/deploy:/tmp/deploy -e ANSIBLE_HOST_KEY_CHECKING=false --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m copy -a "src=/tmp/deploy/prod/emsd/docker-compose-deploy.yml dest=/usr/local/demo/docker-compose-deploy.yml"
+          docker run -v $PWD/hostfile:/tmp/hostfile -e ANSIBLE_HOST_KEY_CHECKING=false --rm ghcr.io/yunhorn/ubuntu:ansible ansible -i /tmp/hostfile demo -m shell -a "docker-compose -f /usr/local/demo/docker-compose-deploy.yml --compatibility up -d "
+          rm -f hostfile

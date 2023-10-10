@@ -1,0 +1,20 @@
+version: "3.7"
+
+x-logging:
+  &default-logging
+  options:
+    mode: non-blocking
+    max-buffer-size: 1m
+    tag: "demo.{{.Name}}"  #配置容器的tag,以demo.为前缀,容器名称为后缀,docker-compose会给容器添加副本后缀
+
+services:
+  demo:
+    logging: *default-logging
+    restart: always
+    user: root #该服务内运行的进程将以root用户的身份启动
+    image: registry.cn-hangzhou.aliyuncs.com/minggo/demo:0.0.2-SNAPSHOT
+    ports:
+      - 8081:8081
+    environment:
+      - server.port=8081
+
